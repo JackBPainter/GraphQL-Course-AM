@@ -5,7 +5,17 @@ import { GraphQLServer } from 'graphql-yoga'
 // Type Defintion = Schema
 const typeDefs = `
     type Query {
+        greeting(name: String): String!
+        add(num1: Float!, num2: Float!): Float!
         post: Post!
+        me: User!
+    }
+
+    type User {
+        id: ID!
+        name: String!
+        email: String!
+        age: Int
     }
 
     type Post {
@@ -19,6 +29,24 @@ const typeDefs = `
 // Resolvers
 const resolvers = {
     Query: {
+        greeting(parents, args) {
+            if (args.name) {
+                return `Hello ${args.name}!`
+            } else {
+                return 'Hello!'
+            }
+        },  
+        add(parents, args) {
+            return args.num1 + args.num2
+        },
+        me() {
+            return {
+                id: 78868,
+                name: 'John Doe',
+                email: 'john@gmail.com',
+                age: 45
+            }        
+        },
         post() {
             return {
                 id: 1,

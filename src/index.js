@@ -1,7 +1,38 @@
-import myDefault, { subtract } from './math'
+import { GraphQLServer } from 'graphql-yoga'
 
-const num1 = 20
-const num2 = 10
+// Type Defintion = Schema
+const typeDefs = `
+    type Query {
+        hello: String!
+        name: String!
+        location: String!
+        bio: String!
+    }
+`
 
-console.log(myDefault(num1, num2))
-console.log(subtract(num1, num2))
+// Resolvers
+const resolvers = {
+    Query: {
+        hello() {
+            return 'This is my first query!'
+        },
+        name() {
+            return 'Jack Painter'
+        },
+        location() {
+            return 'London'
+        },
+        bio() {
+            return 'I am a Jnr React Developer'
+        }
+    }
+}
+
+const server = new GraphQLServer({
+    typeDefs,
+    resolvers
+})
+
+server.start(() => {
+    console.log('Server is up')
+})

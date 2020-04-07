@@ -5,16 +5,20 @@ import { GraphQLServer } from 'graphql-yoga'
 // Demo user data
 const comments = [{
     id: '101',
-    text: 'This is comment one'
+    text: 'This is comment one',
+    author: '3'
 }, {
     id: '102',
-    text: 'This is comment two'
+    text: 'This is comment two',
+    author: '3'
 }, {
     id: '103',
-    text: 'This is comment three'
+    text: 'This is comment three',
+    author: '2'
 }, {
     id: '104',
-    text: 'This is comment four'
+    text: 'This is comment four',
+    author: '1'
 }]
 
 const users = [{
@@ -70,6 +74,7 @@ const typeDefs = `
         email: String!
         age: Int
         posts: [Post!]!
+        comments: [Comment!]!
     }
 
     type Post {
@@ -83,6 +88,7 @@ const typeDefs = `
     type Comment {
         id: ID!
         text: String!
+        author: User!
     }
 `
 
@@ -135,10 +141,22 @@ const resolvers = {
             })
         }
     },
+    Comment: {
+        author(parent, args, ctx, info) {
+            return users.filter((user) => {
+                return user.id === parent.id
+            })
+        }
+    },
     User: {
         posts(parent, args, ctx, info) {
             return posts.filter((post) => {
                 return post.author === parent.id
+            })
+        },
+        comments(parent, args, ctx, info) {
+            return comments.filter(comment => {
+                return comment.author === parent.id
             })
         }
     }

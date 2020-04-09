@@ -1,4 +1,5 @@
 import { GraphQLServer } from 'graphql-yoga'
+import uuidv4 from 'uuid/v4'
 
 // Scaler types - String, Boolean, Int (whole numbers), Float (numbers with decimal points, ID) 
 
@@ -70,6 +71,10 @@ const typeDefs = `
         me: User!
         post: Post!
         comments: [Comment!]!
+    }
+
+    type Mutation {
+        createUser(name: String!, email: String!, age: Int): User!
     }
 
     type User {
@@ -152,6 +157,26 @@ const resolvers = {
             })
         }
     },
+    Mutation: {
+        createUser(parent, args, ctx, info) {
+            const emailTaken = users.some(user => user.email === args.email)
+
+            if(emailTaken) {
+                throw new Error('Email already in use!')
+            }
+
+            const user = {
+                id: uuidv4(),
+                name: args.name,
+                email: args.email,
+                age: args.age
+            }
+            
+            users.push(user)
+
+            return user
+        }
+    },
     Comment: {
         author(parent, args, ctx, info) {
             return users.filter((user) => {
@@ -175,7 +200,7 @@ const resolvers = {
                 return comment.author === parent.id
             })
         }
-    }
+    },
 }
 
 const server = new GraphQLServer({

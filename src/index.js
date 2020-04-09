@@ -6,19 +6,23 @@ import { GraphQLServer } from 'graphql-yoga'
 const comments = [{
     id: '101',
     text: 'This is comment one',
-    author: '3'
+    author: '3',
+    post: '10'
 }, {
     id: '102',
     text: 'This is comment two',
-    author: '3'
+    author: '3',
+    post: '12'
 }, {
     id: '103',
     text: 'This is comment three',
-    author: '2'
+    author: '2',
+    post: '11'
 }, {
     id: '104',
     text: 'This is comment four',
-    author: '1'
+    author: '1',
+    post: '10'
 }]
 
 const users = [{
@@ -39,19 +43,19 @@ const users = [{
 }]
 
 const posts = [{
-    id: '1',
+    id: '10',
     title: 'First World War',
     body: 'The first of two world wars',
     published: true,
     author: '1'
 }, {
-    id: '2',
+    id: '11',
     title: 'Second World War',
     body: 'The second of two world wars',
     published: true,
     author: '1'
 }, {
-    id: '3',
+    id: '12',
     title: 'Coronavirus',
     body: 'The war against people who are too stupid / ignorant to listen to government instructions',
     published: true,
@@ -83,12 +87,14 @@ const typeDefs = `
         body: String!
         published: Boolean!
         author: User!
+        comments: [Comment!]!
     }
 
     type Comment {
         id: ID!
         text: String!
         author: User!
+        post: Post!
     }
 `
 
@@ -139,12 +145,22 @@ const resolvers = {
             return users.find((user) => {
                 return user.id === parent.author
             })
+        },
+        comments(parent, args, ctx, info) {
+            return comments.filter(comment => {
+                return comment.post === parent.id
+            })
         }
     },
     Comment: {
         author(parent, args, ctx, info) {
             return users.filter((user) => {
                 return user.id === parent.id
+            })
+        },
+        post(parent, args, ctx, info) {
+            return posts.find(post => {
+                return post.id === parent.post
             })
         }
     },

@@ -4,7 +4,7 @@ import uuidv4 from 'uuid/v4'
 // Scaler types - String, Boolean, Int (whole numbers), Float (numbers with decimal points, ID) 
 
 // Demo user data
-const comments = [{
+let comments = [{
     id: '101',
     text: 'This is comment one',
     author: '3',
@@ -26,7 +26,7 @@ const comments = [{
     post: '10'
 }]
 
-const users = [{
+let users = [{
     id: '1',
     name: 'Jess',
     email: 'Jess@gmail.com',
@@ -43,7 +43,7 @@ const users = [{
     age: 27
 }]
 
-const posts = [{
+let posts = [{
     id: '10',
     title: 'First World War',
     body: 'The first of two world wars',
@@ -74,7 +74,29 @@ const typeDefs = `
     }
 
     type Mutation {
-        createUser(name: String!, email: String!, age: Int): User!
+        createUser(data: CreateUserInput!): User!
+        deleteUser(id: ID!): User!
+        createPost(data: CreatePostInput): Post!
+        createComment(data: CreateCommentInput): Comment!
+    }
+
+    input CreateUserInput {
+        name: String!
+        email: String!
+        age: Int
+    }
+
+    input CreatePostInput {
+        title: String!,
+        body: String!,
+        published: Boolean!,
+        author: ID!
+    }
+
+    input CreateCommentInput {
+        text: String!, 
+        author: ID!, 
+        post: ID!
     }
 
     type User {
@@ -145,21 +167,9 @@ const resolvers = {
             return comments
         }
     },
-    Post: {
-        author(parent, args, ctx, info) {
-            return users.find((user) => {
-                return user.id === parent.author
-            })
-        },
-        comments(parent, args, ctx, info) {
-            return comments.filter(comment => {
-                return comment.post === parent.id
-            })
-        }
-    },
     Mutation: {
         createUser(parent, args, ctx, info) {
-            const emailTaken = users.some(user => user.email === args.email)
+            const emailTaken = users.some(user => user.email === args.data.email)
 
             if(emailTaken) {
                 throw new Error('Email already in use!')
@@ -167,20 +177,77 @@ const resolvers = {
 
             const user = {
                 id: uuidv4(),
-                name: args.name,
-                email: args.email,
-                age: args.age
+                ...args.data
             }
             
             users.push(user)
 
             return user
+        },
+        deleteUser(parent, args, ctx, info) {
+            const userIndex = users.findIndex(user => user.id === args.id)
+
+            if(userIndex === -1) {
+                throw new Error('No user found')
+            }
+
+            const deletedUsers = users.splice(userIndex, 1)
+
+            posts = posts.filter(post => {
+                const match = post.author === args.id
+
+                if (match) {
+                    comments = comments.filter(comment =>  comment.post !== post.id)
+                }
+
+                return !match
+            })
+            comments = comments.filter(comment => comment.author !== args.id)
+
+            return deletedUsers[0]
+        },
+        createPost(parent, args, ctx, info) {
+            const userExists = users.some(user => user.id === args.data.author)
+
+            if(!userExists) {
+                throw new Error('User not found')
+            }
+
+            const post = {
+                id: uuidv4(),
+                ...args.data
+            }
+
+            posts.push(post)
+
+            return post
+        },
+        createComment(parent, args, ctx, info) {
+            const userExists = users.some(user => user.id === args.data.author)
+            const postExists = posts.some(post => post.id === args.data.post && post.published)
+
+            if(!userExists) {
+                throw new Error('User not found')
+            }
+
+            if(!postExists) {
+                throw new Error('Post not found')
+            }
+
+            const comment = {
+                id: uuidv4(),
+                ...args.data
+            }
+            
+            comments.push(comment)
+
+            return comment
         }
     },
     Comment: {
         author(parent, args, ctx, info) {
-            return users.filter((user) => {
-                return user.id === parent.id
+            return users.find((user) => {
+                return user.id === parent.author
             })
         },
         post(parent, args, ctx, info) {
@@ -192,7 +259,7 @@ const resolvers = {
     User: {
         posts(parent, args, ctx, info) {
             return posts.filter((post) => {
-                return post.author === parent.id
+                return post.author === parent.author
             })
         },
         comments(parent, args, ctx, info) {
@@ -201,6 +268,18 @@ const resolvers = {
             })
         }
     },
+    Post: {
+        author(parent, args, ctx, info) {
+            return users.find((user) => {
+                return user.id === parent.author
+            })
+        },
+        comments(parent, args, ctx, info) {
+            return comments.filter(comment => {
+                return comment.post === parent.id
+            })
+        }
+    }
 }
 
 const server = new GraphQLServer({

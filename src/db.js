@@ -47,7 +47,7 @@ const posts = [{
     id: '11',
     title: 'Second World War',
     body: 'The second of two world wars',
-    published: true,
+    published: false,
     author: '1'
 }, {
     id: '12',
